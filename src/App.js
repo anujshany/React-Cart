@@ -1,46 +1,44 @@
 import React from 'react';
 import Cart from './Cart';
 import Navbar from './NavBar';
+import firebase from "firebase/app";
+import firestore from "firebase";
 
 class App extends React.Component {
 
   constructor () {
     super();
     this.state = {
-      products: [
-        {
-          price: 35999,
-          title: 'Smart Watch',
-          qty: 1,
-          img: 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c21hcnQlMjB3YXRjaHxlbnwwfHwwfHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-          id: 1
-        },
-        {
-          price: 85999,
-          title: 'Mobile Phone',
-          qty: 1,
-          img: 'https://images.samsung.com/in/smartphones/galaxy-z-flip3-5g/images/galaxy-z-flip3-5g_highlights_colors_green.png',
-          id: 2
-        },
-        {
-          price: 65999,
-          title: 'Televison',
-          qty: 1,
-          img: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?ixid=MnwxMjA3fDB8MHxzZWFyY2h8NXx8dGVsZXZpc2lvbnxlbnwwfHwwfHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-          id: 2
-        },
-        {
-          price: 169999,
-          title: 'Laptop',
-          qty: 1,
-          img: 'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8bGFwdG9wfGVufDB8fDB8fA%3D%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
-          id: 3
-        }
-      ]
+      products: [],
+      loading: true
     }
-    // this.increaseQuantity = this.increaseQuantity.bind(this);
-    // this.testing();
   }
+
+  componentDidMount(){
+    firebase
+     .firestore()
+     .collection('Products')
+     .get()
+     .then((snapshot)=>{
+       console.log(snapshot);
+
+       snapshot.docs.map((doc)=>{
+         console.log(doc.data())
+       })
+
+       const products = snapshot.docs.map((doc)=>{
+         const data = doc.data();
+
+         data['id'] = doc.id;
+         return data;
+       })
+       this.setState({
+         products,
+         loading:false
+       })
+     })
+  }
+
   handleIncreaseQuantity = (product) => {
     console.log('Heyy please inc the qty of ', product);
     const { products } = this.state;
@@ -94,16 +92,19 @@ class App extends React.Component {
 
     let cartTotal = 0;
 
-    products.map((product)=>{
-      cartTotal = cartTotal + product.qty * product.price
-    })
+    products.map((products)=>{
+      if(products.qty >0){
+        cartTotal = cartTotal + products.qty * products.price
+      }
+      return'';
+    });
     return cartTotal;
   }
 
 
 
   render () {
-    const { products } = this.state;
+    const { products, loading } = this.state;
     return (
       <div className="App">
         <Navbar count={this.getCartCount()} />
@@ -113,6 +114,7 @@ class App extends React.Component {
           onDecreaseQuantity={this.handleDecreaseQuantity}
           onDeleteProduct={this.handleDeleteProduct}
         />
+        {loading && <h1>Loading Products ....</h1>  }
         <div style={{fontSize:20,padding:10}}>
           Total : {this.getCartTotal()}
         </div>
